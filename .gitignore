@@ -31,3 +31,17 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Mac OS ###
+.DS_Store
+
+### Others ###
+*.log
+
+### Environment Variables ###
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+*.env
