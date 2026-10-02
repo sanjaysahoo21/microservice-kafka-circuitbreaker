@@ -7,12 +7,14 @@ spring:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
     consumer:
-      group-id: invoice-processing-group
+      group-id: ${KAFKA_CONSUMER_GROUP_ID:invoice-processing-group}
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
         spring.json.trusted.packages: "*"
+    topic:
+      invoice-processing: ${KAFKA_TOPIC_INVOICE_PROCESSING:invoice_processing_events}
 
 management:
   endpoints:

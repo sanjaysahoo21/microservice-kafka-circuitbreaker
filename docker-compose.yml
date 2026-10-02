@@ -1,27 +1,27 @@
 version: '3.8'
 services:
   zookeeper:
-    image: 'confluentinc/cp-zookeeper:7.5.0'
+    image: 'confluentinc/cp-zookeeper:${KAFKA_VERSION:-7.5.0}'
     hostname: zookeeper
     ports:
-      - "2181:2181"
+      - "${ZOOKEEPER_PORT:-2181}:${ZOOKEEPER_PORT:-2181}"
     environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_CLIENT_PORT: ${ZOOKEEPER_PORT:-2181}
       ZOOKEEPER_TICK_TIME: 2000
 
   kafka:
-    image: 'confluentinc/cp-kafka:7.5.0'
+    image: 'confluentinc/cp-kafka:${KAFKA_VERSION:-7.5.0}'
     hostname: kafka
     depends_on:
       - zookeeper
     ports:
-      - "9092:9092"
-      - "9093:9093"
+      - "${KAFKA_INTERNAL_PORT:-9092}:${KAFKA_INTERNAL_PORT:-9092}"
+      - "${KAFKA_EXTERNAL_PORT:-9093}:${KAFKA_EXTERNAL_PORT:-9093}"
     environment:
       KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:${ZOOKEEPER_PORT:-2181}'
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:${KAFKA_INTERNAL_PORT:-9092},PLAINTEXT_HOST://localhost:${KAFKA_EXTERNAL_PORT:-9093}
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
@@ -35,14 +35,17 @@ services:
     depends_on:
       - kafka
     ports:
-      - "8080:8080"
+      - "${APP_PORT:-8080}:${APP_PORT:-8080}"
     environment:
-      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-      CIRCUIT_BREAKER_FAILURE_RATE_THRESHOLD: 50
-      CIRCUIT_BREAKER_WAIT_DURATION_IN_OPEN_STATE_SECONDS: 10
-      CIRCUIT_BREAKER_PERMITTED_CALLS_IN_HALF_OPEN_STATE: 1
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:-kafka:9092}
+      CIRCUIT_BREAKER_FAILURE_RATE_THRESHOLD: ${CIRCUIT_BREAKER_FAILURE_RATE_THRESHOLD:-50}
+      CIRCUIT_BREAKER_WAIT_DURATION_IN_OPEN_STATE_SECONDS: ${CIRCUIT_BREAKER_WAIT_DURATION_IN_OPEN_STATE_SECONDS:-10}
+      CIRCUIT_BREAKER_PERMITTED_CALLS_IN_HALF_OPEN_STATE: ${CIRCUIT_BREAKER_PERMITTED_CALLS_IN_HALF_OPEN_STATE:-1}
+      KAFKA_TOPIC_INVOICE_PROCESSING: ${KAFKA_TOPIC_INVOICE_PROCESSING:-invoice_processing_events}
+      KAFKA_CONSUMER_GROUP_ID: ${KAFKA_CONSUMER_GROUP_ID:-invoice-processing-group}
+      SERVER_PORT: ${APP_PORT:-8080}
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:${APP_PORT:-8080}/actuator/health"]
       interval: 10s
       timeout: 5s
       retries: 5
